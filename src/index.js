@@ -14,10 +14,11 @@ class BinarySupport {
     return new Promise(resolve => {
       this.provider.request('CloudFormation', 'describeStacks', { StackName: this.provider.naming.getStackName(stage) }).then(resp => {
         const output = resp.Stacks[0].Outputs;
-        let apiUrl;
-        output.filter(entry => entry.OutputKey.match('ServiceEndpoint')).forEach(entry => apiUrl = entry.OutputValue);
-        const apiId = apiUrl.match('https:\/\/(.*)\\.execute-api')[1];
-        resolve(apiId);
+        const apiUrls = output
+          .filter(entry => entry.OutputKey === 'ServiceEndpoint')
+          .map(serviceEndpoint => serviceEndpoint.OutputValue);
+        this.serverless.cli.consoleLog('Found API URLs:', apiUrls);
+        return apiUrls[0].match(/https:\/\/(.*)\.execute-api/)[1];
       });
     });
   }
